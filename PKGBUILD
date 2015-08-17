@@ -1,0 +1,41 @@
+# Maintainer: Charles Bos <charlesbos1 AT gmail>
+# Contributor: Balló György <ballogyor+arch at gmail dot com>
+
+pkgname=unity-lens-applications
+pkgver=6.10.0 
+pkgrel=3
+pkgdesc="Exposes your applications with their usage statistics and status to Unity"
+arch=('i686' 'x86_64')
+url="https://launchpad.net/unity-lens-applications"
+license=('GPL')
+depends=('libzeitgeist' 'libunity' 'gnome-menus2' 'xapian-core' 'dconf' 'libgee06')
+makedepends=('vala' 'intltool')
+install=$pkgname.install
+source=(http://launchpad.net/$pkgname/6.0/$pkgver/+download/$pkgname-$pkgver.tar.gz
+        http://pkgbuild.com/~bgyorgy/sources/$pkgname-translations-20130310.tar.gz
+        no-db5.1.patch)
+md5sums=('7bd197a93f8faf9987fbeda1411acf3e'
+         '3922ed29b2cd98e5e213d5b9a9fe4287'
+         '9096d609585f28cf9aeefba2de9ab1e2')
+
+build() {
+  cd "$srcdir/$pkgname-$pkgver"
+
+  # Do not check for db version
+  patch -Np1 -i "$srcdir/no-db5.1.patch"
+
+  # Install updated language files
+  rename $pkgname- '' ../po/$pkgname-*.po
+  mv -f -t po ../po/*
+  printf "%s\n" po/*.po | sed -e 's/po\///g' -e 's/\.po//g' >po/LINGUAS
+
+  ./configure --prefix=/usr --sysconfdir=/etc --localstatedir=/var --libexecdir=/usr/lib/$pkgname \
+              --disable-static --disable-schemas-compile
+  make
+}
+
+package() {
+  cd "$srcdir/$pkgname-$pkgver"
+
+  make DESTDIR="$pkgdir/" install
+}
